@@ -7,6 +7,9 @@ export default defineConfig({
     'process.env': process.env
   },
   plugins: [react()],
+  server: {
+    port: 5184
+  },
   build: {
     commonjsOptions: {
       transformMixedEsModules: true,
