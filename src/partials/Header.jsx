@@ -22,18 +22,10 @@ function Header({
 
   // Route name mapping with icons
   const routeConfig = {
-    '/Home': { name: 'Home', icon: MdDashboard, color: 'text-blue-600' },
-    '/MouldMaintenanceHistory': { name: 'Preventive Maintenance History', icon: MdHistory, color: 'text-violet-600' },
-    '/PMStatus': { name: 'PM Status', icon: MdBuild, color: 'text-orange-600' },
-    '/HCStatus': { name: 'Health Check Status', icon: MdHealthAndSafety, color: 'text-green-600' },
-    '/SparePart': { name: 'Spare Part', icon: MdInventory, color: 'text-yellow-600' },
-    '/MouldSummary': { name: 'Mould Summary', icon: MdDashboard, color: 'text-indigo-600' },
-    '/parameters': { name: 'Parameters', icon: MdSettings, color: 'text-gray-600' },
-    '/HCHistory': { name: 'Health Check History', icon: MdHistory, color: 'text-green-600' },
-    '/MouldBreakdownHistory': { name: 'Mould Breakdown History', icon: MdHistory, color: 'text-red-600' },
-    '/SparePartHistory': { name: 'Spare Part History', icon: MdInventory, color: 'text-yellow-600' },
-    '/PMCheckPointReport': { name: 'PM CheckPoint Report', icon: MdReport, color: 'text-blue-600' },
-    '/HCCheckPointReport': { name: 'HC CheckPoint Report', icon: MdReport, color: 'text-green-600' },
+    '/Home': { name: 'Machine Performance', icon: MdDashboard, color: 'text-blue-600' },
+    '/MouldSummary': { name: 'Mould Preventive Maintenance Summary', icon: MdDashboard, color: 'text-indigo-600' },
+    '/MouldHCSummary': { name: 'Mould Health Check Summary', icon: MdSettings, color: 'text-gray-600' },
+   
   };
 
   const currentRoute = routeConfig[pathname] || { name: 'Dashboard', icon: MdDashboard, color: 'text-blue-600' };

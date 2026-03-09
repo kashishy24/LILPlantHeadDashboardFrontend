@@ -20,10 +20,8 @@ export default function Home() {
       const res = await fetch(
         `${BASE}/PerformanceHome/machine-performance?filterType=${type}`
       );
-
       const data = await res.json();
       setMachines(data);
-
     } catch (err) {
       console.error("API Error:", err);
     }
@@ -39,7 +37,6 @@ export default function Home() {
         const date = new Date(data[0].ProdDate).toISOString().split("T")[0];
         setProdDate(date);
       }
-
     } catch (err) {
       console.error("ProdDate Error:", err);
     }
@@ -50,14 +47,23 @@ export default function Home() {
     fetchProdDate();
   }, []);
 
-  const handlePrev = () => {
-    setFilterType("Prev");
-    fetchMachines("Prev");
-  };
+ const handlePrev = () => {
+  setFilterType("Prev");
+  fetchMachines("Prev");
+
+  if (prodDate) {
+    const prevDate = new Date(prodDate);
+    prevDate.setDate(prevDate.getDate() - 1);
+
+    const formatted = prevDate.toISOString().split("T")[0];
+    setProdDate(formatted);
+  }
+};
 
   const handleCurrent = () => {
     setFilterType("Current");
     fetchMachines("Current");
+     fetchProdDate(); // reset date from API
   };
 
   // Excel Download
@@ -70,45 +76,99 @@ export default function Home() {
   // PDF Download
   const downloadPDF = () => {
 
-    const doc = new jsPDF();
+    const doc = new jsPDF("l", "mm", "a4");
+
+    doc.setFontSize(14);
+    doc.text("Machine Performance Report", 14, 15);
+
+    doc.setFontSize(10);
+    doc.text(`Prod Date: ${prodDate}`, 14, 22);
+
+    const head = [[
+      "Machine",
+      "Running Mould",
+      "OEE",
+      "Availability",
+      "Performance",
+      "Quality",
+      "Plan",
+      "Actual",
+      "Achievement",
+      "Rejection",
+      "Man",
+      "Material",
+      "Method",
+      "Machine",
+      "Mould",
+      "Total DT"
+    ]];
+
+    const body = machines.map((m) => [
+      m.Machine,
+      m.RunningMould || "-",
+      m.OEE,
+      m.Availability,
+      m.Performance,
+      m.Quality,
+      m.Plan,
+      m.Actual,
+      m.Achievement,
+      m.Rejected,
+      m.Man,
+      m.Material,
+      m.Method,
+      m.MachineDT,
+      m.Mould,
+      m.TotalDT
+    ]);
 
     autoTable(doc, {
-      html: tableRef.current,
-      startY: 20,
-      theme: "grid"
+      startY: 28,
+      head,
+      body,
+      styles: { fontSize: 8, halign: "center" },
+      headStyles: { fillColor: [55, 65, 81] },
+      alternateRowStyles: { fillColor: [245, 245, 245] }
     });
 
     doc.save("Machine_Performance.pdf");
   };
 
+  // Dashboard stats
+  const totalMachines = machines.length;
+
   return (
     <DashboardLayout>
 
-      <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="p-6 bg-gray-100 min-h-screen">
 
-        {/* HEADER */}
-        <div className="flex justify-between items-center mb-6">
+        {/* DASHBOARD HEADER */}
+        <div className="bg-white shadow-md rounded-xl p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
 
-          {/* LEFT SIDE - PROD DATE */}
-          <div className="flex items-center gap-3">
-            <label className="font-medium">Prod Date:</label>
-            <input
-              type="date"
-              value={prodDate}
-              readOnly
-              className="border p-2 rounded bg-gray-100"
-            />
+          <div className="flex items-center gap-4">
+            {/* <h2 className="text-xl font-semibold text-gray-700">
+              Machine Performance Dashboard
+            </h2> */}
+
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-black">Prod Date</span>
+              <input
+                type="date"
+                value={prodDate}
+                readOnly
+                className="border border-black rounded-md px-2 py-1 text-sm bg-gray-50 text-black"
+              />
+            </div>
           </div>
 
-          {/* RIGHT SIDE BUTTONS */}
-          <div className="flex gap-3">
+          <div className="flex gap-2">
 
             <button
               onClick={handlePrev}
-              className={`px-4 py-2 rounded text-white transition
+              className={`px-4 py-2 rounded-md text-sm font-medium transition
               ${filterType === "Prev"
-                  ? "bg-blue-900"
-                  : "bg-blue-400 hover:bg-blue-500"
+                  ? "bg-blue-700 text-white"
+                  : "bg-blue-100 text-blue-700 hover:bg-blue-200"
                 }`}
             >
               Prev
@@ -116,10 +176,10 @@ export default function Home() {
 
             <button
               onClick={handleCurrent}
-              className={`px-4 py-2 rounded text-white transition
+              className={`px-4 py-2 rounded-md text-sm font-medium transition
               ${filterType === "Current"
-                  ? "bg-blue-900"
-                  : "bg-blue-400 hover:bg-blue-500"
+                  ? "bg-blue-700 text-white"
+                  : "bg-blue-100 text-blue-700 hover:bg-blue-200"
                 }`}
             >
               Current
@@ -127,30 +187,32 @@ export default function Home() {
 
             <button
               onClick={downloadExcel}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+              className="px-4 py-2 rounded-md bg-green-600 text-white text-sm hover:bg-green-700"
             >
               Excel
             </button>
 
             <button
               onClick={downloadPDF}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+              className="px-4 py-2 rounded-md bg-red-600 text-white text-sm hover:bg-red-700"
             >
               PDF
             </button>
 
           </div>
-
         </div>
 
+        {/* SUMMARY CARDS */}
+
+
         {/* TABLE */}
-        <div className="bg-white shadow rounded-lg overflow-auto">
+        <div className="bg-white shadow-lg rounded-xl border border-gray-200 overflow-auto max-h-[70vh]">
 
           <table ref={tableRef} className="w-full border text-sm">
 
-            <thead>
+            <thead className="sticky top-0 z-20">
 
-              <tr className="bg-blue-900 text-white text-center">
+              <tr className="bg-indigo-700 text-white text-center">
 
                 <th rowSpan="2" className="border p-2">Machine</th>
                 <th rowSpan="2" className="border p-2">Running Mould</th>
@@ -166,7 +228,7 @@ export default function Home() {
 
               </tr>
 
-              <tr className="bg-blue-700 text-white text-center">
+              <tr className="bg-indigo-600 text-white text-center">
 
                 <th className="border">Plan</th>
                 <th className="border">Actual</th>
@@ -189,13 +251,21 @@ export default function Home() {
 
               {machines.map((m, i) => (
 
-                <tr key={i} className="text-center border">
+                <tr
+                  key={i}
+                  className="text-center border text-sm hover:bg-blue-50 transition"
+                >
 
-                  <td className="border p-2 font-medium">{m.Machine}</td>
+                  <td className="border p-2 font-semibold text-gray-700">
+                    {m.Machine}
+                  </td>
 
                   <td className="border">{m.RunningMould || "-"}</td>
 
-                  <td className="border">{m.OEE}</td>
+                  <td className="border font-semibold text-green-600">
+                    {m.OEE}
+                  </td>
+
                   <td className="border">{m.Availability}</td>
                   <td className="border">{m.Performance}</td>
                   <td className="border">{m.Quality}</td>

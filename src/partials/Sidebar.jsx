@@ -128,7 +128,7 @@ function Sidebar({
                       <div className="flex items-center">
                         <MdHome size={20} />
                         <span className="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
-                          Home
+                          Performance
                         </span>
                       </div>
                     </div>
