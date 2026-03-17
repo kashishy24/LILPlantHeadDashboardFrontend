@@ -11,6 +11,7 @@ export default function Home() {
   const [filterType, setFilterType] = useState("Current");
   const [machines, setMachines] = useState([]);
   const [prodDate, setProdDate] = useState("");
+const [originalDate, setOriginalDate] = useState("");
 
   const tableRef = useRef();
 
@@ -28,38 +29,37 @@ export default function Home() {
   };
 
   // Fetch Production Date
-  const fetchProdDate = async () => {
-    try {
-      const res = await fetch(`${BASE}/PerformanceHome/GetProdDate`);
-      const data = await res.json();
+const fetchProdDate = async () => {
+  try {
+    const res = await fetch(`${BASE}/PerformanceHome/GetProdDate`);
+    const data = await res.json();
 
-      if (data.length > 0) {
-        const date = new Date(data[0].ProdDate).toISOString().split("T")[0];
-        setProdDate(date);
-      }
-    } catch (err) {
-      console.error("ProdDate Error:", err);
+    if (data.length > 0) {
+      const date = new Date(data[0].ProdDate).toISOString().split("T")[0];
+      setProdDate(date);
+      setOriginalDate(date); // store original date
     }
-  };
-
+  } catch (err) {
+    console.error("ProdDate Error:", err);
+  }
+};
   useEffect(() => {
     fetchMachines("Current");
     fetchProdDate();
   }, []);
 
- const handlePrev = () => {
+const handlePrev = () => {
   setFilterType("Prev");
   fetchMachines("Prev");
 
-  if (prodDate) {
-    const prevDate = new Date(prodDate);
+  if (originalDate) {
+    const prevDate = new Date(originalDate);
     prevDate.setDate(prevDate.getDate() - 1);
 
     const formatted = prevDate.toISOString().split("T")[0];
     setProdDate(formatted);
   }
 };
-
   const handleCurrent = () => {
     setFilterType("Current");
     fetchMachines("Current");
