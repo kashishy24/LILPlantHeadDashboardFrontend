@@ -84,43 +84,46 @@ export default function Home() {
   };
 
   // Excel Download
-  const downloadExcel = () => {
-    const table = tableRef.current;
-    const workbook = XLSX.utils.table_to_book(table, { sheet: "Machine Data" });
-    XLSX.writeFile(workbook, "Machine_Performance.xlsx");
-  };
+const downloadExcel = () => {
+  const wsData = [];
 
-  // PDF Download
-  const downloadPDF = () => {
+  // 🔹 Title
+  wsData.push(["Plant Performance Report"]);
+  wsData.push([`Prod Date: ${prodDate}`]);
+  wsData.push([]);
 
-    const doc = new jsPDF("l", "mm", "a4");
+  // 🔹 Plant Summary Section
+  if (plantSummary) {
+    wsData.push(["Plant Summary"]);
+    wsData.push([
+      "OEE", "Availability", "Performance", "Quality",
+      "Plan", "Actual", "Achievement", "Total DT"
+    ]);
 
-    doc.setFontSize(14);
-    doc.text("Machine Performance Report", 14, 15);
+    wsData.push([
+      plantSummary.OEE,
+      plantSummary.Availability,
+      plantSummary.Performance,
+      plantSummary.Quality,
+      plantSummary.Plan,
+      plantSummary.Actual,
+      plantSummary.Achievement,
+      plantSummary.TotalDT
+    ]);
 
-    doc.setFontSize(10);
-    doc.text(`Prod Date: ${prodDate}`, 14, 22);
+    wsData.push([]); // spacing
+  }
 
-    const head = [[
-      "Machine",
-      "Running Mould",
-      "OEE",
-      "Availability",
-      "Performance",
-      "Quality",
-      "Plan",
-      "Actual",
-      "Achievement",
-      "Rejection",
-      "Man",
-      "Material",
-      "Method",
-      "Machine",
-      "Mould",
-      "Total DT"
-    ]];
+  // 🔹 Machine Table Header
+  wsData.push([
+    "Machine", "Running Mould", "OEE", "Availability", "Performance", "Quality",
+    "Plan", "Actual", "Achievement", "Rejection",
+    "Man", "Material", "Method", "Machine", "Mould", "Total DT"
+  ]);
 
-    const body = machines.map((m) => [
+  // 🔹 Machine Data
+  machines.forEach((m) => {
+    wsData.push([
       m.Machine,
       m.RunningMould || "-",
       m.OEE,
@@ -138,18 +141,103 @@ export default function Home() {
       m.Mould,
       m.TotalDT
     ]);
+  });
 
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Report");
+
+  XLSX.writeFile(wb, "Plant_Machine_Report.xlsx");
+};
+
+  // PDF Download
+const downloadPDF = () => {
+
+  const doc = new jsPDF("l", "mm", "a4");
+
+  doc.setFontSize(14);
+  doc.text("Plant & Machine Performance Report", 14, 15);
+
+  doc.setFontSize(10);
+  doc.text(`Prod Date: ${prodDate}`, 14, 22);
+
+  let startY = 28;
+
+  // 🔹 Plant Summary Table
+  if (plantSummary) {
     autoTable(doc, {
-      startY: 28,
-      head,
-      body,
-      styles: { fontSize: 8, halign: "center" },
-      headStyles: { fillColor: [55, 65, 81] },
-      alternateRowStyles: { fillColor: [245, 245, 245] }
+      startY: startY,
+      head: [[
+        "OEE", "Availability", "Performance", "Quality",
+        "Plan", "Actual", "Achievement", "Total DT"
+      ]],
+      body: [[
+        plantSummary.OEE,
+        plantSummary.Availability,
+        plantSummary.Performance,
+        plantSummary.Quality,
+        plantSummary.Plan,
+        plantSummary.Actual,
+        plantSummary.Achievement,
+        plantSummary.TotalDT
+      ]],
+      styles: { fontSize: 9, halign: "center" },
+      headStyles: { fillColor: [22, 160, 133] }
     });
 
-    doc.save("Machine_Performance.pdf");
-  };
+    startY = doc.lastAutoTable.finalY + 8;
+  }
+
+  // 🔹 Machine Table
+  const head = [[
+    "Machine",
+    "Running Mould",
+    "OEE",
+    "Availability",
+    "Performance",
+    "Quality",
+    "Plan",
+    "Actual",
+    "Achievement",
+    "Rejection",
+    "Man",
+    "Material",
+    "Method",
+    "Machine",
+    "Mould",
+    "Total DT"
+  ]];
+
+  const body = machines.map((m) => [
+    m.Machine,
+    m.RunningMould || "-",
+    m.OEE,
+    m.Availability,
+    m.Performance,
+    m.Quality,
+    m.Plan,
+    m.Actual,
+    m.Achievement,
+    m.Rejected,
+    m.Man,
+    m.Material,
+    m.Method,
+    m.MachineDT,
+    m.Mould,
+    m.TotalDT
+  ]);
+
+  autoTable(doc, {
+    startY: startY,
+    head,
+    body,
+    styles: { fontSize: 8, halign: "center" },
+    headStyles: { fillColor: [55, 65, 81] },
+    alternateRowStyles: { fillColor: [245, 245, 245] }
+  });
+
+  doc.save("Plant_Machine_Report.pdf");
+};
 
   // Dashboard stats
   const totalMachines = machines.length;
