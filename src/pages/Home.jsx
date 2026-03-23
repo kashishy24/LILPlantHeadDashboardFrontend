@@ -11,7 +11,8 @@ export default function Home() {
   const [filterType, setFilterType] = useState("Current");
   const [machines, setMachines] = useState([]);
   const [prodDate, setProdDate] = useState("");
-const [originalDate, setOriginalDate] = useState("");
+  const [originalDate, setOriginalDate] = useState("");
+  const [plantSummary, setPlantSummary] = useState(null);
 
   const tableRef = useRef();
 
@@ -27,43 +28,59 @@ const [originalDate, setOriginalDate] = useState("");
       console.error("API Error:", err);
     }
   };
+  //fetch plant summary
+  const fetchPlantSummary = async (type) => {
+    try {
+      const res = await fetch(
+        `${BASE}/PerformanceHome/Plant-performance?FilterType=${type}`
+      );
+      const data = await res.json();
+
+      // assuming API returns single object
+      setPlantSummary(data[0] || data);
+    } catch (err) {
+      console.error("Plant Summary API Error:", err);
+    }
+  };
 
   // Fetch Production Date
-const fetchProdDate = async () => {
-  try {
-    const res = await fetch(`${BASE}/PerformanceHome/GetProdDate`);
-    const data = await res.json();
+  const fetchProdDate = async () => {
+    try {
+      const res = await fetch(`${BASE}/PerformanceHome/GetProdDate`);
+      const data = await res.json();
 
-    if (data.length > 0) {
-      const date = new Date(data[0].ProdDate).toISOString().split("T")[0];
-      setProdDate(date);
-      setOriginalDate(date); // store original date
+      if (data.length > 0) {
+        const date = new Date(data[0].ProdDate).toISOString().split("T")[0];
+        setProdDate(date);
+        setOriginalDate(date); // store original date
+      }
+    } catch (err) {
+      console.error("ProdDate Error:", err);
     }
-  } catch (err) {
-    console.error("ProdDate Error:", err);
-  }
-};
+  };
   useEffect(() => {
     fetchMachines("Current");
+    fetchPlantSummary("Current");
     fetchProdDate();
   }, []);
 
-const handlePrev = () => {
-  setFilterType("Prev");
-  fetchMachines("Prev");
+  const handlePrev = () => {
+    setFilterType("Prev");
+    fetchMachines("Prev");
+    fetchPlantSummary("Prev");
+    if (originalDate) {
+      const prevDate = new Date(originalDate);
+      prevDate.setDate(prevDate.getDate() - 1);
 
-  if (originalDate) {
-    const prevDate = new Date(originalDate);
-    prevDate.setDate(prevDate.getDate() - 1);
-
-    const formatted = prevDate.toISOString().split("T")[0];
-    setProdDate(formatted);
-  }
-};
+      const formatted = prevDate.toISOString().split("T")[0];
+      setProdDate(formatted);
+    }
+  };
   const handleCurrent = () => {
     setFilterType("Current");
     fetchMachines("Current");
-     fetchProdDate(); // reset date from API
+    fetchPlantSummary("Current");
+    fetchProdDate(); // reset date from API
   };
 
   // Excel Download
@@ -204,7 +221,56 @@ const handlePrev = () => {
 
         {/* SUMMARY CARDS */}
 
+        {/* PLANT SUMMARY CARDS */}
+        {plantSummary && (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-6">
 
+            <div className="bg-white shadow rounded-xl p-4 text-center">
+              <p className="text-xs text-gray-500">OEE</p>
+              <p className="text-xl font-bold text-green-600">{plantSummary.OEE}%</p>
+            </div>
+
+            <div className="bg-white shadow rounded-xl p-4 text-center">
+              <p className="text-xs text-gray-500">Availability</p>
+              <p className="text-xl font-bold text-blue-600">{plantSummary.Availability}%</p>
+            </div>
+
+            <div className="bg-white shadow rounded-xl p-4 text-center">
+              <p className="text-xs text-gray-500">Performance</p>
+              <p className="text-xl font-bold text-purple-600">{plantSummary.Performance}%</p>
+            </div>
+
+            <div className="bg-white shadow rounded-xl p-4 text-center">
+              <p className="text-xs text-gray-500">Quality</p>
+              <p className="text-xl font-bold text-indigo-600">{plantSummary.Quality}%</p>
+            </div>
+
+            <div className="bg-white shadow rounded-xl p-4 text-center">
+              <p className="text-xs text-gray-500">Plan</p>
+              <p className="text-lg font-semibold">{plantSummary.Plan}</p>
+            </div>
+
+            <div className="bg-white shadow rounded-xl p-4 text-center">
+              <p className="text-xs text-gray-500">Actual</p>
+              <p className="text-lg font-semibold">{plantSummary.Actual}</p>
+            </div>
+
+            <div className="bg-white shadow rounded-xl p-4 text-center">
+              <p className="text-xs text-gray-500">Achievement</p>
+              <p className="text-lg font-semibold text-green-700">
+                {plantSummary.Achievement}%
+              </p>
+            </div>
+
+            <div className="bg-white shadow rounded-xl p-4 text-center">
+              <p className="text-xs text-gray-500">Total DT</p>
+              <p className="text-lg font-semibold text-red-600">
+                {plantSummary.TotalDT}
+              </p>
+            </div>
+
+          </div>
+        )}
         {/* TABLE */}
         <div className="bg-white shadow-lg rounded-xl border border-gray-200 overflow-auto max-h-[70vh]">
 
